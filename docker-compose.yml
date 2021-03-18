@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  rabbit-mq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+    - "15672:15672"
+    - "5672:5672"
+    # - "1883:1883"
+    labels:
+      NAME: "rabbitmq"
+    volumes:
+    - $PWD/storage/rabbitmq:/var/lib/rabbitmq
+    environment:
+    - RABBITMQ_ERLANG_COOKIE=cluster_cookie
+    - RABBITMQ_DEFAULT_USER=admin
+    - RABBITMQ_DEFAULT_PASS=Admin123
+    - RABBITMQ_DEFAULT_VHOST=/
+    networks:
+      - backend
+
+  go-producer:
+    build: ./producer/.
+    container_name: producer
+    ports:
+      - 8080:8080
+    depends_on:
+      - rabbit-mq
+    networks:
+      - backend
+    restart: on-failure
+
+  go-consumer:
+    build: ./consumer/.
+    container_name: consumer
+    depends_on:
+      - rabbit-mq
+    networks:
+      - backend
+    restart: on-failure
+
+networks:
+  backend:  
